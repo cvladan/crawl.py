@@ -173,16 +173,26 @@ def get_pydantic_ai_docs_urls(sitemap_url: str):
         return []        
 
 async def main():
-    parser = argparse.ArgumentParser(description="Web crawler for sitemap URLs")
+    parser = argparse.ArgumentParser(description="Web crawler")
     parser.add_argument(
         '-s', '--sitemap',
         type=str,
-        default="https://www.cnc24.com/sitemap.xml",
-        help="URL of the sitemap to crawl (default: https://www.cnc24.com/sitemap.xml)"
+        help="URL of the sitemap to crawl"
+    )
+    parser.add_argument(
+        'url',
+        nargs='?',
+        help="URL to crawl (if not using a sitemap)"
     )
     args = parser.parse_args()
-    
-    urls = get_pydantic_ai_docs_urls(args.sitemap)
+
+    if args.sitemap:
+        urls = get_pydantic_ai_docs_urls(args.sitemap)
+    elif args.url:
+        urls = [args.url]
+    else:
+        parser.print_help()
+        return
     if urls:
         print(f"Found {len(urls)} URLs to crawl")
         await crawl_parallel(urls, max_concurrent=10)

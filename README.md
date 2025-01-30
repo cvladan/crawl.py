@@ -43,14 +43,18 @@ https://github.com/coleam00/ottomator-agents/blob/main/crawl4AI-agent/crawl4AI-e
 
 # Usage
 
-The script can be run in two ways:
+The script can be run in three ways:
 
-1. **With the default sitemap**: `python crawl.py`
+1. **With no arguments**: `python crawl.py`
+   - This will print the usage instructions, showing the available options.
+
+2. **With the default sitemap**: `python crawl.py --sitemap`
    - This will use the default sitemap specified in the script to crawl the website.
 
-2. **With a custom sitemap**: `python crawl.py --sitemap <URL>`
-   - Replace `<URL>` with the URL of the website you want to crawl.
-   - This will use the provided URL as the starting point for crawling the website.
+3. **With a custom URL**: `python crawl.py <URL>`
+   - Replace `<URL>` with the URL of the website or specific page you want to crawl.
+   - If a URL is provided without the `--sitemap` flag, the script will crawl only that single page and save its content to a Markdown file.
+   - If the `--sitemap` flag is used with a URL, the script will use that URL as the starting point for crawling the entire website.
 
 ```sh
 # Run with default sitemap:
@@ -77,7 +81,7 @@ python crawl.py --sitemap <URL>
 # Examples
 
 ```sh
-python crawl.py --sitemap https://www.example.com/sitemap.xml 
+python crawl.py --sitemap "https://www.cnc24.com/sitemap.xml?lang=de"
 python crawl.py -s https://www.techpilot.com/de/sitemap.xml
 python crawl.py -s https://www.machiningdoctor.com/glossary-sitemap.xml
 ```
