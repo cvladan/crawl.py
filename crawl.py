@@ -51,8 +51,10 @@ async def crawl_parallel(urls: List[str], max_concurrent: int = 3):
     crawler = AsyncWebCrawler(config=browser_config)
     await crawler.start()
 
+    accumulated_content = []
+
     try:
-        # We'll chunk the URLs in batches of 'max_concurrent'
+        # We'll chunk the URLs in batches of 'max_concurrent' 
         success_count = 0
         fail_count = 0
         for i in range(0, len(urls), max_concurrent):
@@ -87,12 +89,17 @@ async def crawl_parallel(urls: List[str], max_concurrent: int = 3):
                     slug = re.sub(r'[^a-zA-Z0-9]+', '-', urlparse(url).path.strip('/'))
                     output_dir = os.path.join(__output__, domain)
                     os.makedirs(output_dir, exist_ok=True)
+                    
                     # Write individual file
-                    with open(os.path.join(output_dir, f"{slug}.md"), 'w') as file:
+                    individual_filename = f"{slug}.md" if slug else "index.md"
+                    with open(os.path.join(output_dir, individual_filename), 'w') as file:
                         file.write(result.markdown_v2.fit_markdown)
 
                     # Accumulate content for combined file
-                    accumulated_content.append(f"<url>{url}</url>\n<content>\n{result.markdown_v2.fit_markdown}\n</content>\n")
+                    accumulated_content.append({
+                        "url": url,
+                        "content": result.markdown_v2.fit_markdown
+                    })
                 else:
                     fail_count += 1
 
@@ -108,10 +115,17 @@ async def crawl_parallel(urls: List[str], max_concurrent: int = 3):
         print(f"\nPeak memory usage (MB): {peak_memory // (1024 * 1024)}")
 
         # Write accumulated content to combined file
-        combined_output_path = os.path.join(__output__, "_combined.md")
-        with open(combined_output_path, 'w') as file:
-            file.write("\n\n".join(accumulated_content))
-        print(f"Combined output written to: {combined_output_path}")
+        for domain, files in accumulated_content_by_domain.items():
+            combined_output_dir = os.path.join(__output__, domain)
+            os.makedirs(combined_output_dir, exist_ok=True)
+            combined_output_path = os.path.join(combined_output_dir, "_combined.md")
+            
+            with open(combined_output_path, 'w') as file:
+                for entry in files:
+                    file.write(f"<url>{entry['url']}</url>\n")
+                    file.write(f"<content>\n{entry['content']}\n</content>\n\n")
+            
+            print(f"Combined output for {domain} written to: {combined_output_path}")
 
 def generate_accumulated_content(urls, results):
     accumulated_content = []
