@@ -2,45 +2,6 @@ This Python script, `crawl.py`, is designed to crawl a website and generate Mark
 
 Here's a detailed explanation of how it works.
 
-
-# Prepare System
-
-```sh
-# first run
-
-asdf install python latest
-asdf local python latest
-python -m pip install --upgrade pip
-
-asdf plugin add rust
-asdf install rust latest
-asdf local rust latest
-
-# must do this (to the same version as local)
-sdf global rust latest
-
-# and actually not always the latest version
-asdf install python 3.11.7
-asdf global python 3.11.7
-asdf local python 3.11.7
-pip install --upgrade pip
-```
-
-```sh
-# setup versions from .tool-versions
-asdf install
-
-# setup app
-pip install -U crawl4ai
-```
-
-# Code
-
-This is repo I'm replicating:
-
-https://github.com/coleam00/ottomator-agents/blob/main/crawl4AI-agent/crawl4AI-examples/3-crawl_docs_FAST.py
-
-
 # Usage
 
 The script can be run in three ways:
@@ -77,6 +38,43 @@ python crawl.py --sitemap <URL>
 - Additionally, the script appends the content of each page to a combined Markdown file named `combined.md`.
 
 - The individual Markdown files are saved in the `crawls/` directory, while the `combined.md` file is saved in the current working directory.
+
+# Code
+
+This is repo I'm replicating:
+
+https://github.com/coleam00/ottomator-agents/blob/main/crawl4AI-agent/crawl4AI-examples/3-crawl_docs_FAST.py
+
+# Prepare System for execution
+
+```sh
+# first run
+
+asdf install python latest
+asdf local python latest
+python -m pip install --upgrade pip
+
+asdf plugin add rust
+asdf install rust latest
+asdf local rust latest
+
+# must do this (to the same version as local)
+sdf global rust latest
+
+# and actually not always the latest version
+asdf install python 3.11.7
+asdf global python 3.11.7
+asdf local python 3.11.7
+pip install --upgrade pip
+```
+
+```sh
+# setup versions from .tool-versions
+asdf install
+
+# setup app
+pip install -U crawl4ai
+```
 
 # Examples
 
