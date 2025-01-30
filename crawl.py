@@ -4,10 +4,14 @@ import psutil
 import asyncio
 import requests
 import argparse
+import re
 from xml.etree import ElementTree
+from urllib.parse import urlparse
+from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
+from crawl4ai.content_filter_strategy import PruningContentFilter
 
 __location__ = os.path.dirname(os.path.abspath(__file__))
-__output__ = os.path.join(__location__, "output")
+__output__ = os.path.join(__location__, "crawls")
 
 # Append parent directory to system path
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -36,7 +40,12 @@ async def crawl_parallel(urls: List[str], max_concurrent: int = 3):
         verbose=False,   # corrected from 'verbos=False'
         extra_args=["--disable-gpu", "--disable-dev-shm-usage", "--no-sandbox"],
     )
-    crawl_config = CrawlerRunConfig(cache_mode=CacheMode.BYPASS)
+    crawl_config = CrawlerRunConfig(
+        cache_mode=CacheMode.BYPASS,
+        markdown_generator=DefaultMarkdownGenerator(
+            content_filter=PruningContentFilter(threshold=0.48, threshold_type="fixed", min_word_threshold=0)
+        ),
+    )
 
     # Create the crawler instance
     crawler = AsyncWebCrawler(config=browser_config)
@@ -72,6 +81,18 @@ async def crawl_parallel(urls: List[str], max_concurrent: int = 3):
                     fail_count += 1
                 elif result.success:
                     success_count += 1
+                    # Save markdown
+                    domain = urlparse(url).netloc.replace('www.', '')
+                    # Extract slug from URL path
+                    slug = re.sub(r'[^a-zA-Z0-9]+', '-', urlparse(url).path.strip('/'))
+                    output_dir = os.path.join(__output__, domain)
+                    os.makedirs(output_dir, exist_ok=True)
+                    # Write individual file
+                    with open(os.path.join(output_dir, f"{slug}.md"), 'w') as file:
+                        file.write(result.markdown_v2.fit_markdown)
+
+                    # Accumulate content for combined file
+                    accumulated_content.append(f"<url>{url}</url>\n<content>\n{result.markdown_v2.fit_markdown}\n</content>\n")
                 else:
                     fail_count += 1
 
@@ -85,6 +106,19 @@ async def crawl_parallel(urls: List[str], max_concurrent: int = 3):
         # Final memory log
         log_memory(prefix="Final: ")
         print(f"\nPeak memory usage (MB): {peak_memory // (1024 * 1024)}")
+
+        # Write accumulated content to combined file
+        combined_output_path = os.path.join(__output__, "_combined.md")
+        with open(combined_output_path, 'w') as file:
+            file.write("\n\n".join(accumulated_content))
+        print(f"Combined output written to: {combined_output_path}")
+
+def generate_accumulated_content(urls, results):
+    accumulated_content = []
+    for url, result in zip(urls, results):
+        if result.success:
+            accumulated_content.append(f"<url>{url}</url>\n<content>\n{result.markdown_v2.fit_markdown}\n</content>\n")
+    return accumulated_content
 
 def get_pydantic_ai_docs_urls(sitemap_url: str):
     """
