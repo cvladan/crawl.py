@@ -74,3 +74,10 @@ python crawl.py --sitemap <URL>
 
 - The individual Markdown files are saved in the `crawls/` directory, while the `combined.md` file is saved in the current working directory.
 
+# Examples
+
+```sh
+python crawl.py --sitemap https://www.example.com/sitemap.xml 
+python crawl.py -s https://www.techpilot.com/de/sitemap.xml
+python crawl.py -s https://www.machiningdoctor.com/glossary-sitemap.xml
+```
