@@ -51,11 +51,12 @@ async def crawl_parallel(urls: List[str], max_concurrent: int = 3):
     crawler = AsyncWebCrawler(config=browser_config)
     await crawler.start()
 
-    accumulated_content = []
+    url_order = 1
+    accumulated_content = {}
 
     try:
-        # We'll chunk the URLs in batches of 'max_concurrent' 
-        success_count = 0
+        # We'll chunk the URLs in batches of 'max_concurrent'
+        success_count = 0 
         fail_count = 0
         for i in range(0, len(urls), max_concurrent):
             batch = urls[i : i + max_concurrent]
@@ -90,16 +91,26 @@ async def crawl_parallel(urls: List[str], max_concurrent: int = 3):
                     output_dir = os.path.join(__output__, domain)
                     os.makedirs(output_dir, exist_ok=True)
                     
-                    # Write individual file
-                    individual_filename = f"{slug}.md" if slug else "index.md"
+                    # Generate prefixed filename
+                    prefix = str(url_order).zfill(4)
+                    individual_filename = f"{prefix}_{slug}.md" if slug else f"{prefix}_index.md"
+
+                    # Write individual file 
                     with open(os.path.join(output_dir, individual_filename), 'w') as file:
                         file.write(result.markdown_v2.fit_markdown)
 
                     # Accumulate content for combined file
-                    accumulated_content.append({
+                    domain = urlparse(url).netloc.replace('www.', '')
+                    if domain not in accumulated_content:
+                        accumulated_content[domain] = []
+                    
+                    accumulated_content[domain].append({
+                        "order": url_order,
                         "url": url,
                         "content": result.markdown_v2.fit_markdown
                     })
+
+                    url_order += 1
                 else:
                     fail_count += 1
 
@@ -114,14 +125,14 @@ async def crawl_parallel(urls: List[str], max_concurrent: int = 3):
         log_memory(prefix="Final: ")
         print(f"\nPeak memory usage (MB): {peak_memory // (1024 * 1024)}")
 
-        # Write accumulated content to combined file
-        for domain, files in accumulated_content_by_domain.items():
+        # Write accumulated content to combined files
+        for domain, entries in accumulated_content.items():
             combined_output_dir = os.path.join(__output__, domain)
             os.makedirs(combined_output_dir, exist_ok=True)
             combined_output_path = os.path.join(combined_output_dir, "_combined.md")
             
             with open(combined_output_path, 'w') as file:
-                for entry in files:
+                for entry in sorted(entries, key=lambda x: x['order']):
                     file.write(f"<url>{entry['url']}</url>\n")
                     file.write(f"<content>\n{entry['content']}\n</content>\n\n")
             
