@@ -36,3 +36,7 @@ This is repo I'm replicating:
 https://github.com/coleam00/ottomator-agents/blob/main/crawl4AI-agent/crawl4AI-examples/3-crawl_docs_FAST.py
 
 
+# Usage
+
+Run with default sitemap: python crawl.py
+Specify custom sitemap: python crawl.py --sitemap <URL>

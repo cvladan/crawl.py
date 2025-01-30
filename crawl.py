@@ -3,6 +3,7 @@ import sys
 import psutil
 import asyncio
 import requests
+import argparse
 from xml.etree import ElementTree
 
 __location__ = os.path.dirname(os.path.abspath(__file__))
@@ -85,15 +86,16 @@ async def crawl_parallel(urls: List[str], max_concurrent: int = 3):
         log_memory(prefix="Final: ")
         print(f"\nPeak memory usage (MB): {peak_memory // (1024 * 1024)}")
 
-def get_pydantic_ai_docs_urls():
+def get_pydantic_ai_docs_urls(sitemap_url: str):
     """
-    Fetches all URLs from the Pydantic AI documentation.
-    Uses the sitemap (https://ai.pydantic.dev/sitemap.xml) to get these URLs.
+    Fetches all URLs from the provided sitemap URL.
+    
+    Args:
+        sitemap_url (str): URL of the sitemap to parse
     
     Returns:
         List[str]: List of URLs
     """            
-    sitemap_url = "https://ai.pydantic.dev/sitemap.xml"
     try:
         response = requests.get(sitemap_url)
         response.raise_for_status()
@@ -112,7 +114,16 @@ def get_pydantic_ai_docs_urls():
         return []        
 
 async def main():
-    urls = get_pydantic_ai_docs_urls()
+    parser = argparse.ArgumentParser(description="Web crawler for sitemap URLs")
+    parser.add_argument(
+        '-s', '--sitemap',
+        type=str,
+        default="https://www.cnc24.com/sitemap.xml",
+        help="URL of the sitemap to crawl (default: https://www.cnc24.com/sitemap.xml)"
+    )
+    args = parser.parse_args()
+    
+    urls = get_pydantic_ai_docs_urls(args.sitemap)
     if urls:
         print(f"Found {len(urls)} URLs to crawl")
         await crawl_parallel(urls, max_concurrent=10)
